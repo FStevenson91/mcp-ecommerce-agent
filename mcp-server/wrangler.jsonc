@@ -33,7 +33,14 @@
 	"observability": {
 		"enabled": true
 	},
-	"upload_source_maps": true
+	"upload_source_maps": true,
+	"d1_databases": [
+		{
+			"binding": "ecommerce_db",
+			"database_name": "ecommerce-db",
+			"database_id": "e8f834d9-2d23-4c76-b88e-d2cfef7a4b78"
+		}
+	]
 	/**
 	 * Smart Placement
 	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
