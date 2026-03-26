@@ -1,9 +1,15 @@
 CREATE TABLE products (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  description TEXT,
-  price REAL NOT NULL,
-  stock INTEGER NOT NULL
+  garment_type TEXT NOT NULL,
+  size TEXT,
+  color TEXT,
+  stock INTEGER NOT NULL,
+  price_50 INTEGER NOT NULL,
+  price_100 INTEGER NOT NULL,
+  price_200 INTEGER NOT NULL,
+  available BOOLEAN,
+  category TEXT,
+  description TEXT
 );
 
 CREATE TABLE carts (
