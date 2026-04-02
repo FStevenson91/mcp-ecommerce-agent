@@ -12,9 +12,9 @@ export class MyMCP extends McpAgent {
 	async init() {
 
 		this.server.tool(
-			"search_products",           // 1. nombre de la tool (string)
-			{ query: z.string() },       // 2. parámetros con validación zod
-			async ({ query }) => {       // 3. función que ejecuta la lógica
+			"search_products",           
+			{ query: z.string() },       
+			async ({ query }) => {      
 				// acá va el SELECT a D1
 				const searchTerm = `%${query}%`;
 				const result = await this.env.ecommerce_db // aca debemos configurar en worker-configuration.d.ts el binding a D1 con el nombre "ecommerce_db", en interface ENV junto al MCP_OBJECT
