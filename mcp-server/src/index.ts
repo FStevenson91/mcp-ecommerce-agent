@@ -5,7 +5,7 @@ import { z } from "zod";
 // Define our MCP agent with tools
 export class MyMCP extends McpAgent {
 	server = new McpServer({
-		name: "Authless Calculator",
+		name: "MCP Ecommerce Agent",
 		version: "1.0.0",
 	});
 
@@ -27,49 +27,90 @@ export class MyMCP extends McpAgent {
 			}
 		);
 
-		// Simple addition tool
-		this.server.tool("add", { a: z.number(), b: z.number() }, async ({ a, b }) => ({
-			content: [{ type: "text", text: String(a + b) }],
-		}));
 
-		// Calculator tool with multiple operations
 		this.server.tool(
-			"calculate",
-			{
-				operation: z.enum(["add", "subtract", "multiply", "divide"]),
-				a: z.number(),
-				b: z.number(),
-			},
-			async ({ operation, a, b }) => {
-				let result: number;
-				switch (operation) {
-					case "add":
-						result = a + b;
-						break;
-					case "subtract":
-						result = a - b;
-						break;
-					case "multiply":
-						result = a * b;
-						break;
-					case "divide":
-						if (b === 0)
-							return {
-								content: [
-									{
-										type: "text",
-										text: "Error: Cannot divide by zero",
-									},
-								],
-							};
-						result = a / b;
-						break;
+			"get_product_id",
+			{ product_id: z.string() },
+			async ({product_id}) => {
+				const result = await this.env.ecommerce_db
+				.prepare("SELECT * FROM products WHERE id = ?")
+				.bind(product_id)
+				.all();
+				return {
+					content: [{type: "text", text: JSON.stringify(result.results)}]
 				}
-				return { content: [{ type: "text", text: String(result) }] };
+			}
+
+		);
+
+
+		this.server.tool(
+			"create_cart",
+			{ items: z.array(
+				z.object({
+					product_id: z.number(),
+					quantity: z.number()
+				}))
 			},
+			async ({items}) => {
+			const cart = await this.env.ecommerce_db
+			.prepare("INSERT INTO carts DEFAULT VALUES RETURNING id")
+			.run();
+			const cartID = cart.results[0].id;
+
+			for (const item of items){
+				await this.env.ecommerce_db
+				.prepare("INSERT INTO cart_items (cart_id, product_id, quantity) VALUES (?,?,?) ")
+				.bind(cartID, item.product_id, item.quantity)
+				.run();
+			}
+			
+			return {
+				content: [{type: "text", text: JSON.stringify({cart_id: cartID, items: items})}]
+							}
+			}
+			);
+
+		this.server.tool(  
+			"get_cart", 
+			{ cart_id: z.string()},  
+
+			async ( {cart_id}) => { 
+
+			const result = await this.env.ecommerce_db 
+			.prepare(  "SELECT cart_items.quantity, products.*  FROM cart_items  JOIN products ON cart_items.product_id = products.id  WHERE cart_items.cart_id = ?") 
+			.bind( cart_id ) 
+			.all(); 
+
+			return {                
+				 content: [{type: "text", text: JSON.stringify({cart_id: cart_id, items: result.results})}]                             
+				}		
+			} 
+		    );
+
+		this.server.tool(
+			"update_cart", 
+			{ cart_id: z.string(), product_id: z.number(), quantity: z.number() },
+
+			async ({cart_id, product_id, quantity}) =>{
+				if (quantity === 0){
+					await this.env.ecommerce_db
+					.prepare("DELETE FROM cart_items WHERE cart_id = ? AND product_id = ?")
+					.bind(cart_id, product_id)
+					.run();
+				} else {
+					await this.env.ecommerce_db
+					.prepare("UPDATE cart_items SET quantity = ? WHERE cart_id = ? AND product_id = ?")
+					.bind(quantity, cart_id, product_id)
+					.run();
+				}
+				return {                
+				 content: [{type: "text" as const, text: JSON.stringify({cart_id: cart_id, product_id: product_id, quantity: quantity, action: quantity === 0 ? "removed" : "updated"})}]                             
+				}	
+			}
 		);
 	}
-}
+};
 
 export default {
 	fetch(request: Request, env: Env, ctx: ExecutionContext) {
