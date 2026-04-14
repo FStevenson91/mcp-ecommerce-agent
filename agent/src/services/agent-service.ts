@@ -7,10 +7,10 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const model = new ChatGroq({
-    apiKey: process.env.GROQ_API_KEY!,
-    model: "llama-3.1-70b-versatile",
-});
+// const model = new ChatGroq({
+//     apiKey: process.env.GROQ_API_KEY!,
+//     model: "llama-3.3-70b-versatile",
+// });
 
 let agent: any = null;
 // Historial de mensajes por conversación
@@ -26,7 +26,10 @@ export async function initAgent() {
     });
 
     agent = createReactAgent({
-        llm: model,
+        llm: new ChatGroq({
+            apiKey: process.env.GROQ_API_KEY!,
+            model: "meta-llama/llama-4-scout-17b-16e-instruct",
+        }),
         tools: tools,
         stateModifier: SYSTEM_PROMPT,// Fix: stateModifier en vez de prompt
     });
@@ -52,5 +55,10 @@ export async function chat(conversationId: string, message: string) {
     conversations.set(conversationId, result.messages);
 
     const lastMessage = result.messages[result.messages.length - 1];
+
+//     console.log("Mensajes del agente:", JSON.stringify(result.messages.map((m: any) => ({
+//     type: m._getType(),
+//     content: m.content,
+// })), null, 2));
     return lastMessage.content as string;
 }
