@@ -2,6 +2,7 @@ import dotenv from "dotenv"
 import express from "express"
 import cors from "cors"
 import { chat } from "./services/agent-service.js" 
+import { initAgent } from "./services/agent-service.js";
 
 dotenv.config();
 
@@ -21,6 +22,8 @@ app.post("/chat", async (req, res) =>{
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
+initAgent().then(()=> {
+  app.listen(PORT, () => {
     console.log(`Agente corriendo en http://localhost:${PORT}`);
+});  
 });
