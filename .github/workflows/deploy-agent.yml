@@ -1,0 +1,50 @@
+name: Deploy Agent to Azure
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'agent/**'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: agent
+        run: npm ci
+
+      - name: Build
+        working-directory: agent
+        run: npm run build
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Disable Azure build
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: 'mcp-ecommerce-agent'
+          app-settings-json: |
+            [
+              { "name": "SCM_DO_BUILD_DURING_DEPLOYMENT", "value": "false" },
+              { "name": "NODE_ENV", "value": "production" }
+            ]
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'mcp-ecommerce-agent'
+          package: agent
