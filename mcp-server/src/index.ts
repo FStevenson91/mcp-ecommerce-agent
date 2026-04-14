@@ -30,11 +30,11 @@ export class MyMCP extends McpAgent {
 
 		this.server.tool(
 			"get_product_id",
-			{ product_id: z.string() },
+			{ product_id: z.number() },
 			async ({product_id}) => {
 				const result = await this.env.ecommerce_db
 				.prepare("SELECT * FROM products WHERE id = ?")
-				.bind(product_id)
+				.bind(product_id.toString())
 				.all();
 				return {
 					content: [{type: "text", text: JSON.stringify(result.results)}]
@@ -73,13 +73,13 @@ export class MyMCP extends McpAgent {
 
 		this.server.tool(  
 			"get_cart", 
-			{ cart_id: z.string()},  
+			{ cart_id: z.number()},  
 
 			async ( {cart_id}) => { 
 
 			const result = await this.env.ecommerce_db 
 			.prepare(  "SELECT cart_items.quantity, products.*  FROM cart_items  JOIN products ON cart_items.product_id = products.id  WHERE cart_items.cart_id = ?") 
-			.bind( cart_id ) 
+			.bind( cart_id.toString()) 
 			.all(); 
 
 			return {                
@@ -90,18 +90,18 @@ export class MyMCP extends McpAgent {
 
 		this.server.tool(
 			"update_cart", 
-			{ cart_id: z.string(), product_id: z.number(), quantity: z.number() },
+			{ cart_id: z.number(), product_id: z.number(), quantity: z.number() },
 
 			async ({cart_id, product_id, quantity}) =>{
 				if (quantity === 0){
 					await this.env.ecommerce_db
 					.prepare("DELETE FROM cart_items WHERE cart_id = ? AND product_id = ?")
-					.bind(cart_id, product_id)
+					.bind(cart_id.toString(), product_id)
 					.run();
 				} else {
 					await this.env.ecommerce_db
 					.prepare("UPDATE cart_items SET quantity = ? WHERE cart_id = ? AND product_id = ?")
-					.bind(quantity, cart_id, product_id)
+					.bind(quantity, cart_id.toString(), product_id)
 					.run();
 				}
 				return {                
