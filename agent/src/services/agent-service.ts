@@ -9,17 +9,15 @@ dotenv.config();
 
 const model = new ChatGroq({
     apiKey: process.env.GROQ_API_KEY!,
-    model: "llama-3.3-70b-versatile",
+    model: "llama-3.1-70b-versatile",
 });
 
 let agent: any = null;
-
 // Historial de mensajes por conversación
 const conversations: Map<string, BaseMessage[]> = new Map();
 
 export async function initAgent() {
     const tools = await connectMCP();
-
     // Las tools del MCP vienen sin descripción, Groq la requiere
     tools.forEach((tool: any) => {
         if (!tool.description) {
@@ -30,7 +28,7 @@ export async function initAgent() {
     agent = createReactAgent({
         llm: model,
         tools: tools,
-        prompt: SYSTEM_PROMPT,
+        stateModifier: SYSTEM_PROMPT,// Fix: stateModifier en vez de prompt
     });
 
     console.log(`Agente listo. Tools: ${tools.map((t: any) => t.name).join(", ")}`);
@@ -54,6 +52,5 @@ export async function chat(conversationId: string, message: string) {
     conversations.set(conversationId, result.messages);
 
     const lastMessage = result.messages[result.messages.length - 1];
-
     return lastMessage.content as string;
 }
