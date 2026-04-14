@@ -27,7 +27,7 @@ function App() {
     setLoading(true)
 
     try {
-      const res = await axios.post('https://mcp-ecommerce-agent.azurewebsites.net/chat', {
+      const res = await axios.post('https://mcp-ecommerce-agent-bhhrcyedh0eyfzf3.canadacentral-01.azurewebsites.net/chat', {
         message: text,
         conversationId
       })
